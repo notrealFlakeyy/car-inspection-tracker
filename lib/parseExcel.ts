@@ -59,6 +59,9 @@ export function parseExcel(file: File): Promise<Car[]> {
           reg: (row[regCol] ?? '').toString(),
           lastInspected: excelDateToJS(row[lastCol]),
           nextInspection: excelDateToJS(row[nextCol]),
+          inactive: false,
+          companies: [],
+          sharedOwnership: false,
         }))
 
         resolve(cars.filter((c) => c.name || c.reg))
