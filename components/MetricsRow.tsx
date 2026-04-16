@@ -5,26 +5,33 @@ interface Props {
   cars: Car[]
 }
 
-export default function MetricsRow({ cars }: Props) {
-  const overdue = cars.filter((c) => getStatus(c) === 'overdue').length
-  const soon = cars.filter((c) => getStatus(c) === 'soon').length
-  const ok = cars.filter((c) => getStatus(c) === 'ok').length
+interface StatCardProps {
+  label: string
+  value: number
+  valueColor: string
+}
 
-  const cards = [
-    { label: 'Total vehicles', value: cars.length, color: 'text-gray-900' },
-    { label: 'Overdue', value: overdue, color: 'text-red-600' },
-    { label: 'Due within 30 days', value: soon, color: 'text-amber-600' },
-    { label: 'Up to date', value: ok, color: 'text-green-600' },
-  ]
+function StatCard({ label, value, valueColor }: StatCardProps) {
+  return (
+    <div className="bg-white rounded-2xl border border-[#dadce0] px-6 py-5">
+      <p className="text-xs font-semibold text-[#5f6368] uppercase tracking-wider">{label}</p>
+      <p className={`mt-1 text-4xl font-light ${valueColor}`}>{value}</p>
+    </div>
+  )
+}
+
+export default function MetricsRow({ cars }: Props) {
+  const active = cars.filter((c) => !c.inactive)
+  const overdue = active.filter((c) => getStatus(c) === 'overdue').length
+  const soon = active.filter((c) => getStatus(c) === 'soon').length
+  const ok = active.filter((c) => getStatus(c) === 'ok').length
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-      {cards.map((c) => (
-        <div key={c.label} className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-          <p className="text-sm text-gray-500">{c.label}</p>
-          <p className={`mt-1 text-3xl font-bold ${c.color}`}>{c.value}</p>
-        </div>
-      ))}
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <StatCard label="Totalt fordon" value={cars.length}  valueColor="text-[#202124]" />
+      <StatCard label="Försenade"     value={overdue}      valueColor="text-[#d93025]" />
+      <StatCard label="Inom 30 dagar" value={soon}         valueColor="text-[#b06000]" />
+      <StatCard label="Aktuella"      value={ok}           valueColor="text-[#137333]" />
     </div>
   )
 }

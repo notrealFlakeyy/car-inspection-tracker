@@ -5,52 +5,76 @@ interface Props {
   car: Car
 }
 
-const badgeConfig = {
-  overdue: { label: 'Overdue', bg: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
-  soon: { label: 'Due soon', bg: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-  ok: { label: 'Up to date', bg: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
-  unknown: { label: 'No date', bg: 'bg-gray-100 text-gray-500', dot: 'bg-gray-400' },
+const STATUS_STYLES = {
+  overdue: { pill: 'bg-[#fce8e6] text-[#d93025]', dot: 'bg-[#d93025]', label: 'Försenad' },
+  soon:    { pill: 'bg-[#fef7e0] text-[#b06000]', dot: 'bg-[#f9ab00]', label: 'Snart förfallen' },
+  ok:      { pill: 'bg-[#e6f4ea] text-[#137333]', dot: 'bg-[#34a853]', label: 'Aktuell' },
+  unknown: { pill: 'bg-[#f1f3f4] text-[#5f6368]', dot: 'bg-[#9aa0a6]', label: 'Inget datum' },
+}
+
+// "Budtrans Malax Ab/Oy" → "BT Malax" · "Oravais Servicetrafik Ab" → "Oravais"
+function abbrevCompany(name: string): string {
+  const words = name.split(' ')
+  if (words[0] === 'Budtrans') return 'BT ' + (words[1] ?? '')
+  return words[0] ?? name
 }
 
 export default function CarCard({ car }: Props) {
   const status = getStatus(car)
   const days = getDaysUntil(car.nextInspection)
-  const badge = badgeConfig[status]
+  const s = STATUS_STYLES[status]
 
   let daysText = ''
   if (days !== null) {
-    if (days < 0) daysText = `${Math.abs(days)} days overdue`
-    else daysText = `${days} days remaining`
+    daysText = days < 0 ? `${Math.abs(days)} dagar försenad` : `${days} dagar kvar`
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center">
+    <tr className={`border-b border-[#f1f3f4] transition-colors hover:bg-[#f8f9fa] ${car.inactive ? 'opacity-50' : ''}`}>
       {/* Vehicle */}
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-gray-900">{car.name || '—'}</p>
-        <p className="mt-0.5 truncate text-sm text-gray-500">{car.reg || '—'}</p>
-      </div>
+      <td className="py-3.5 px-4">
+        <p className="text-sm font-medium text-[#202124]">{car.name || '—'}</p>
+        <p className="text-xs text-[#9aa0a6] font-mono mt-0.5">{car.reg || '—'}</p>
+        {car.companies.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1 mt-1.5">
+            {car.companies.map((co) => (
+              <span key={co} className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#e8f0fe] text-[#1a73e8]">
+                {abbrevCompany(co)}
+              </span>
+            ))}
+            {car.sharedOwnership && (
+              <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-[#fef7e0] text-[#b06000]">
+                Delad
+              </span>
+            )}
+          </div>
+        )}
+      </td>
 
       {/* Last inspected */}
-      <div className="w-36 shrink-0">
-        <p className="text-xs text-gray-400">Last inspected</p>
-        <p className="mt-0.5 text-sm font-medium text-gray-700">{formatDate(car.lastInspected)}</p>
-      </div>
+      <td className="py-3.5 px-4 text-sm text-[#5f6368]">
+        {formatDate(car.lastInspected)}
+      </td>
 
       {/* Next inspection */}
-      <div className="w-36 shrink-0">
-        <p className="text-xs text-gray-400">Next inspection</p>
-        <p className="mt-0.5 text-sm font-medium text-gray-700">{formatDate(car.nextInspection)}</p>
-      </div>
+      <td className="py-3.5 px-4">
+        <p className="text-sm text-[#202124]">{formatDate(car.nextInspection)}</p>
+        {daysText && <p className="text-xs text-[#9aa0a6] mt-0.5">{daysText}</p>}
+      </td>
 
       {/* Status */}
-      <div className="w-32 shrink-0">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${badge.bg}`}>
-          <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
-          {badge.label}
-        </span>
-        {daysText && <p className="mt-1 text-xs text-gray-500">{daysText}</p>}
-      </div>
-    </div>
+      <td className="py-3.5 px-4">
+        {car.inactive ? (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#f1f3f4] text-[#5f6368]">
+            Avställd
+          </span>
+        ) : (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${s.pill}`}>
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.dot}`} />
+            {s.label}
+          </span>
+        )}
+      </td>
+    </tr>
   )
 }

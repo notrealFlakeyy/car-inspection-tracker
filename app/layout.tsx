@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Car Inspection Tracker",
-  description: "Track vehicle inspection dates and stay on top of renewals",
+  title: "Besiktningsöversikt",
+  description: "Håll koll på fordonsbesiktningar och förfallodatum",
 };
 
 export default function RootLayout({
@@ -24,8 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="sv"
+      data-theme="light"
+      className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
