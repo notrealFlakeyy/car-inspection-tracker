@@ -29,7 +29,7 @@ export default function MetricsRow({ cars }: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <StatCard label="Totalt fordon" value={cars.length} valueColor="text-[#202124]" />
-      <StatCard label="F\u00F6rsenade" value={overdue} valueColor="text-[#d93025]" />
+      <StatCard label="Försenade" value={overdue} valueColor="text-[#d93025]" />
       <StatCard label="Inom 30 dagar" value={soon} valueColor="text-[#b06000]" />
       <StatCard label="Aktuella" value={ok} valueColor="text-[#137333]" />
     </div>

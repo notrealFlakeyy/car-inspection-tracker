@@ -18,12 +18,12 @@ export function getStatus(car: Car): Status {
 }
 
 export function urgencyScore(car: Car): number {
-  if (car.inactive) return 99999     // always after active cars
+  if (car.inactive) return 99999
   const days = getDaysUntil(car.nextInspection)
   if (days === null) return 9999
-  if (days < 0) return days          // most negative = most urgent
-  if (days <= 30) return 1000 + days  // soon: lower days first
-  return 2000 + days                  // ok: lower days first
+  if (days < 0) return days
+  if (days <= 30) return 1000 + days
+  return 2000 + days
 }
 
 export function sortCars(cars: Car[], sort: SortOption): Car[] {

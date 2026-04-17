@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Besiktnings\u00F6versikt',
-  description: 'H\u00E5ll koll p\u00E5 fordonsbesiktningar och f\u00F6rfallodatum',
+  title: 'Besiktningsöversikt',
+  description: 'Håll koll på fordonsbesiktningar och förfallodatum',
 }
 
 export const viewport: Viewport = {

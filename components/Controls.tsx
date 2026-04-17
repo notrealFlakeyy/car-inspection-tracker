@@ -22,16 +22,16 @@ interface FilterChip {
 
 const FILTERS: FilterChip[] = [
   { value: 'all', label: 'Alla', activeClass: 'bg-[#e8eaed] text-[#202124] border-[#bdc1c6]' },
-  { value: 'overdue', label: 'F\u00F6rsenade', activeClass: 'bg-[#fce8e6] text-[#d93025] border-[#f5c6c3]' },
+  { value: 'overdue', label: 'Försenade', activeClass: 'bg-[#fce8e6] text-[#d93025] border-[#f5c6c3]' },
   { value: 'soon', label: 'Snart', activeClass: 'bg-[#fef7e0] text-[#b06000] border-[#fce198]' },
   { value: 'ok', label: 'Aktuella', activeClass: 'bg-[#e6f4ea] text-[#137333] border-[#b7dfbf]' },
-  { value: 'inactive', label: 'Avst\u00E4llda', activeClass: 'bg-[#f1f3f4] text-[#5f6368] border-[#dadce0]' },
+  { value: 'inactive', label: 'Avställda', activeClass: 'bg-[#f1f3f4] text-[#5f6368] border-[#dadce0]' },
 ]
 
 const SORT_OPTIONS: { label: string; value: SortOption }[] = [
   { label: 'Status', value: 'urgency' },
   { label: 'Fordon', value: 'name' },
-  { label: 'N\u00E4sta besiktning', value: 'next' },
+  { label: 'Nästa besiktning', value: 'next' },
   { label: 'Senast besiktigad', value: 'last' },
 ]
 
@@ -60,7 +60,7 @@ export default function Controls({
           </svg>
           <input
             type="text"
-            placeholder="S\u00F6k p\u00E5 fordon eller reg.nr..."
+            placeholder="Sök på fordon eller reg.nr..."
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             className="flex-1 bg-transparent text-sm text-[#202124] outline-none placeholder-[#9aa0a6]"

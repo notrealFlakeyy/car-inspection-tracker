@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import * as XLSX from 'xlsx'
+import { normalizeText } from '@/lib/textUtils'
 
 function parseFinDate(val: unknown): string | null {
   if (!val || typeof val !== 'string') return null
@@ -43,32 +44,34 @@ export async function GET() {
       if (!fs.existsSync(filePath)) continue
 
       const buf = fs.readFileSync(filePath)
-      // raw:true keeps registration numbers as ="XXX-999" strings rather than formula results
       const wb = XLSX.read(buf, { type: 'buffer', raw: true })
       const ws = wb.Sheets[wb.SheetNames[0]]
       const rows = XLSX.utils.sheet_to_json(ws, {
-        header: 1, raw: true, defval: null,
+        header: 1,
+        raw: true,
+        defval: null,
       }) as (string | null)[][]
 
-      for (const r of rows.slice(1)) {
-        // Strip Excel text-coercion wrapper: ="XXX-999" → XXX-999
-        const rawReg = (r[0] ?? '').toString()
+      for (const row of rows.slice(1)) {
+        const rawReg = normalizeText((row[0] ?? '').toString())
         const reg = rawReg.replace(/^="?/, '').replace(/"$/, '').trim()
         if (!reg || !reg.includes('-')) continue
 
-        const name = [r[3], r[4]].filter(Boolean).join(' ')
-        const company = extractCompany((r[7] ?? '').toString())
-        const isInactive = (r[1] ?? '').toString().includes('avställd')
-        const last = parseFinDate(r[14])
-        const next = parseFinDate(r[15])
+        const name = [row[3], row[4]]
+          .filter(Boolean)
+          .map((value) => normalizeText(String(value)))
+          .join(' ')
+        const status = normalizeText((row[1] ?? '').toString()).toLowerCase()
+        const company = extractCompany(normalizeText((row[7] ?? '').toString()))
+        const isInactive = status.includes('avställd')
+        const last = parseFinDate(row[14])
+        const next = parseFinDate(row[15])
 
         const existing = regMap.get(reg)
         if (existing) {
           if (company) existing.companies.add(company)
-          // Prefer rows that have more inspection data
           if (!existing.lastInspected && last) existing.lastInspected = last
           if (!existing.nextInspection && next) existing.nextInspection = next
-          // Active if any source says it's registered
           if (!isInactive) existing.allInactive = false
         } else {
           regMap.set(reg, {

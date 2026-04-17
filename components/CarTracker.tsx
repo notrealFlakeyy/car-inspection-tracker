@@ -47,7 +47,7 @@ const SAMPLE_CARS: Car[] = [
 const SORT_COLS: { label: string; value: SortOption }[] = [
   { label: 'Fordon', value: 'name' },
   { label: 'Senast besiktigad', value: 'last' },
-  { label: 'N\u00E4sta besiktning', value: 'next' },
+  { label: 'Nästa besiktning', value: 'next' },
   { label: 'Status', value: 'urgency' },
 ]
 
@@ -81,13 +81,13 @@ export default function CarTracker() {
         if (Array.isArray(data)) {
           setCars(reviveDates(data))
         } else {
-          setError('Kunde inte h\u00E4mta fordonslistan.')
+          setError('Kunde inte hämta fordonslistan.')
         }
         setLoading(false)
       })
       .catch(() => {
         if (!isMounted) return
-        setError('Kunde inte h\u00E4mta fordonslistan.')
+        setError('Kunde inte hämta fordonslistan.')
         setLoading(false)
       })
 
@@ -131,7 +131,7 @@ export default function CarTracker() {
       resetViewState()
       setCars(parsed)
     } catch {
-      setError('Kunde inte l\u00E4sa filen. Kontrollera formatet och f\u00F6rs\u00F6k igen.')
+      setError('Kunde inte läsa filen. Kontrollera formatet och försök igen.')
     }
   }
 
@@ -167,7 +167,7 @@ export default function CarTracker() {
       <div className="flex min-h-screen items-center justify-center bg-[#f1f3f4] px-4">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#dadce0] border-t-[#1a73e8]" />
-          <p className="text-sm text-[#5f6368]">H\u00E4mtar fordon...</p>
+          <p className="text-sm text-[#5f6368]">Hämtar fordon...</p>
         </div>
       </div>
     )
@@ -192,8 +192,8 @@ export default function CarTracker() {
               <CarIcon className="h-8 w-8 text-[#1a73e8]" />
             </div>
           </div>
-          <h1 className="text-2xl font-medium text-[#202124]">Besiktnings\u00F6versikt</h1>
-          <p className="mt-2 text-sm text-[#5f6368]">Importera dina fordon f\u00F6r att komma ig\u00E5ng</p>
+          <h1 className="text-2xl font-medium text-[#202124]">Besiktningsöversikt</h1>
+          <p className="mt-2 text-sm text-[#5f6368]">Importera dina fordon för att komma igång</p>
 
           <div className="mt-8">
             <UploadZone onFile={handleFile} />
@@ -229,7 +229,7 @@ export default function CarTracker() {
               <CarIcon className="h-5 w-5 text-white" />
             </div>
             <span className="truncate text-base font-medium tracking-tight text-[#202124] sm:text-lg">
-              Besiktnings\u00F6versikt
+              Besiktningsöversikt
             </span>
           </div>
 
@@ -238,7 +238,7 @@ export default function CarTracker() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            Ers\u00E4tt fil
+            Ersätt fil
             <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileInput} />
           </label>
         </div>

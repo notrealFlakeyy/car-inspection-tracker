@@ -16,13 +16,13 @@ export default function MobileCarCard({ car }: Props) {
       <div className="min-w-0">
         <div className="flex flex-wrap items-start gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-semibold text-[#202124]">{car.name || '\u2014'}</h3>
-            <p className="mt-1 text-xs font-mono uppercase tracking-[0.18em] text-[#5f6368]">{car.reg || '\u2014'}</p>
+            <h3 className="truncate text-sm font-semibold text-[#202124]">{car.name || '—'}</h3>
+            <p className="mt-1 text-xs font-mono uppercase tracking-[0.18em] text-[#5f6368]">{car.reg || '—'}</p>
           </div>
 
           {car.inactive ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
-              Avst\u00E4lld
+              Avställd
             </span>
           ) : (
             <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle.pill}`}>
@@ -55,7 +55,7 @@ export default function MobileCarCard({ car }: Props) {
         </div>
 
         <div className="rounded-xl bg-[#f8f9fa] px-3 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5f6368]">N\u00E4sta</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5f6368]">Nästa</p>
           <p className="mt-1 text-sm text-[#202124]">{formatDate(car.nextInspection)}</p>
           {daysText && <p className="mt-1 text-xs text-[#9aa0a6]">{daysText}</p>}
         </div>

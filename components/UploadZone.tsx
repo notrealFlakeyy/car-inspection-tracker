@@ -46,7 +46,7 @@ export default function UploadZone({ onFile }: Props) {
         </div>
         <div className="max-w-xs">
           <p className="text-sm font-medium text-[#202124]">
-            Klicka f\u00F6r att v\u00E4lja fil eller dra hit den
+            Klicka för att välja fil eller dra hit den
           </p>
           <p className="mt-1 text-xs text-[#9aa0a6]">
             .xlsx, .xls eller .csv
