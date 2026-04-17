@@ -3,9 +3,30 @@
   themes: ["light"];
 }
 
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: #f1f3f4;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
+  margin: 0;
   background: #f1f3f4;
   color: #202124;
   font-family: var(--font-geist-sans), Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

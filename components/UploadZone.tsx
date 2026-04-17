@@ -28,25 +28,25 @@ export default function UploadZone({ onFile }: Props) {
       onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
-      className={`cursor-pointer rounded-2xl border-2 border-dashed px-8 py-12 text-center transition-all ${
+      className={`cursor-pointer rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-all sm:px-8 sm:py-10 ${
         dragging
           ? 'border-[#1a73e8] bg-[#e8f0fe]/50'
           : 'border-[#dadce0] hover:border-[#1a73e8] hover:bg-[#f8f9fa]'
       }`}
     >
       <div className="flex flex-col items-center gap-4">
-        <div className={`rounded-full p-4 transition-colors ${dragging ? 'bg-[#e8f0fe]' : 'bg-[#f1f3f4]'}`}>
+        <div className={`rounded-full p-3.5 transition-colors sm:p-4 ${dragging ? 'bg-[#e8f0fe]' : 'bg-[#f1f3f4]'}`}>
           <svg
-            className={`h-8 w-8 transition-colors ${dragging ? 'text-[#1a73e8]' : 'text-[#9aa0a6]'}`}
+            className={`h-7 w-7 transition-colors sm:h-8 sm:w-8 ${dragging ? 'text-[#1a73e8]' : 'text-[#9aa0a6]'}`}
             fill="none" viewBox="0 0 24 24" stroke="currentColor"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
               d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
           </svg>
         </div>
-        <div>
+        <div className="max-w-xs">
           <p className="text-sm font-medium text-[#202124]">
-            Klicka för att välja fil eller dra hit den
+            Klicka f\u00F6r att v\u00E4lja fil eller dra hit den
           </p>
           <p className="mt-1 text-xs text-[#9aa0a6]">
             .xlsx, .xls eller .csv

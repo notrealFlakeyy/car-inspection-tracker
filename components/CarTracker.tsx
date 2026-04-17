@@ -1,36 +1,37 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { Car, SortOption, FilterOption } from '@/lib/types'
+import { useEffect, useMemo, useState } from 'react'
+import { Car, FilterOption, SortOption } from '@/lib/types'
 import { getStatus, sortCars } from '@/lib/statusUtils'
 import { parseExcel } from '@/lib/parseExcel'
 import UploadZone from './UploadZone'
 import MetricsRow from './MetricsRow'
 import Controls from './Controls'
 import CarCard from './CarCard'
+import MobileCarCard from './MobileCarCard'
 
 function reviveDates(raw: unknown[]): Car[] {
   return (raw as Array<{
     id: number; name: string; reg: string
     lastInspected: string | null; nextInspection: string | null
     inactive: boolean; companies: string[]; sharedOwnership: boolean
-  }>).map((c) => ({
-    id: c.id,
-    name: c.name,
-    reg: c.reg,
-    lastInspected: c.lastInspected ? new Date(c.lastInspected) : null,
-    nextInspection: c.nextInspection ? new Date(c.nextInspection) : null,
-    inactive: c.inactive ?? false,
-    companies: c.companies ?? [],
-    sharedOwnership: c.sharedOwnership ?? false,
+  }>).map((car) => ({
+    id: car.id,
+    name: car.name,
+    reg: car.reg,
+    lastInspected: car.lastInspected ? new Date(car.lastInspected) : null,
+    nextInspection: car.nextInspection ? new Date(car.nextInspection) : null,
+    inactive: car.inactive ?? false,
+    companies: car.companies ?? [],
+    sharedOwnership: car.sharedOwnership ?? false,
   }))
 }
 
 function daysFromToday(n: number): Date {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  d.setDate(d.getDate() + n)
-  return d
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  date.setDate(date.getDate() + n)
+  return date
 }
 
 const SAMPLE_CARS: Car[] = [
@@ -44,10 +45,10 @@ const SAMPLE_CARS: Car[] = [
 ]
 
 const SORT_COLS: { label: string; value: SortOption }[] = [
-  { label: 'Fordon',            value: 'name' },
+  { label: 'Fordon', value: 'name' },
   { label: 'Senast besiktigad', value: 'last' },
-  { label: 'Nästa besiktning',  value: 'next' },
-  { label: 'Status',            value: 'urgency' },
+  { label: 'N\u00E4sta besiktning', value: 'next' },
+  { label: 'Status', value: 'urgency' },
 ]
 
 const CarIcon = ({ className }: { className?: string }) => (
@@ -68,36 +69,69 @@ export default function CarTracker() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let isMounted = true
+
     fetch('/api/cars')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('load-failed')
+        return res.json()
+      })
       .then((data) => {
-        if (Array.isArray(data)) setCars(reviveDates(data))
+        if (!isMounted) return
+        if (Array.isArray(data)) {
+          setCars(reviveDates(data))
+        } else {
+          setError('Kunde inte h\u00E4mta fordonslistan.')
+        }
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => {
+        if (!isMounted) return
+        setError('Kunde inte h\u00E4mta fordonslistan.')
+        setLoading(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   const companies = useMemo(
-    () => [...new Set(cars.flatMap((c) => c.companies))].sort(),
+    () => [...new Set(cars.flatMap((car) => car.companies))].sort(),
     [cars],
   )
 
+  useEffect(() => {
+    if (companyFilter && !companies.includes(companyFilter)) {
+      setCompanyFilter('')
+    }
+  }, [companies, companyFilter])
+
   function handleSortClick(col: SortOption) {
     if (col === sort) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+      setSortDir((dir) => (dir === 'asc' ? 'desc' : 'asc'))
     } else {
       setSort(col)
       setSortDir('asc')
     }
   }
 
+  function resetViewState() {
+    setSearch('')
+    setSort('urgency')
+    setSortDir('asc')
+    setFilter('all')
+    setCompanyFilter('')
+  }
+
   async function handleFile(file: File) {
     setError(null)
     try {
       const parsed = await parseExcel(file)
+      resetViewState()
       setCars(parsed)
     } catch {
-      setError('Kunde inte läsa filen. Kontrollera formatet och försök igen.')
+      setError('Kunde inte l\u00E4sa filen. Kontrollera formatet och f\u00F6rs\u00F6k igen.')
     }
   }
 
@@ -123,28 +157,27 @@ export default function CarTracker() {
         (filter === 'ok' && !car.inactive && status === 'ok')
       const matchesCompany =
         companyFilter === '' || car.companies.includes(companyFilter)
+
       return matchesSearch && matchesFilter && matchesCompany
     })
   })()
 
-  // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f1f3f4]">
+      <div className="flex min-h-screen items-center justify-center bg-[#f1f3f4] px-4">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-4 border-[#dadce0] border-t-[#1a73e8] animate-spin" />
-          <p className="text-sm text-[#5f6368]">Hämtar fordon…</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#dadce0] border-t-[#1a73e8]" />
+          <p className="text-sm text-[#5f6368]">H\u00E4mtar fordon...</p>
         </div>
       </div>
     )
   }
 
-  // ── Empty / upload ─────────────────────────────────────────────────────────
   if (cars.length === 0) {
     return (
-      <div className="min-h-screen bg-[#f1f3f4] flex items-center justify-center px-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#f1f3f4] px-4 py-8 sm:py-10">
         {error && (
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-white border border-[#dadce0] rounded-2xl shadow-lg px-5 py-4 text-sm text-[#d93025] max-w-md w-full">
+          <div className="fixed left-4 right-4 top-4 z-50 flex items-center gap-3 rounded-2xl border border-[#dadce0] bg-white px-4 py-4 text-sm text-[#d93025] shadow-lg sm:left-1/2 sm:right-auto sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:px-5">
             <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -153,28 +186,32 @@ export default function CarTracker() {
           </div>
         )}
 
-        <div className="bg-white rounded-3xl border border-[#dadce0] shadow-sm w-full max-w-md p-10 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-[#e8f0fe] flex items-center justify-center">
+        <div className="w-full max-w-md rounded-3xl border border-[#dadce0] bg-white p-6 text-center shadow-sm sm:p-10">
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e8f0fe]">
               <CarIcon className="h-8 w-8 text-[#1a73e8]" />
             </div>
           </div>
-          <h1 className="text-2xl font-medium text-[#202124]">Besiktningsöversikt</h1>
-          <p className="mt-2 text-sm text-[#5f6368]">Importera dina fordon för att komma igång</p>
+          <h1 className="text-2xl font-medium text-[#202124]">Besiktnings\u00F6versikt</h1>
+          <p className="mt-2 text-sm text-[#5f6368]">Importera dina fordon f\u00F6r att komma ig\u00E5ng</p>
 
           <div className="mt-8">
             <UploadZone onFile={handleFile} />
           </div>
 
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-[#f1f3f4]" />
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-[#f1f3f4]" />
             <span className="text-xs text-[#9aa0a6]">eller</span>
-            <div className="flex-1 h-px bg-[#f1f3f4]" />
+            <div className="h-px flex-1 bg-[#f1f3f4]" />
           </div>
 
           <button
-            onClick={() => { setCars(SAMPLE_CARS); setSearch(''); setSort('urgency'); setSortDir('asc'); setFilter('all'); setCompanyFilter('') }}
-            className="w-full px-6 py-2.5 rounded-full border border-[#dadce0] text-sm font-medium text-[#1a73e8] hover:bg-[#f8f9fa] transition-colors"
+            type="button"
+            onClick={() => {
+              resetViewState()
+              setCars(SAMPLE_CARS)
+            }}
+            className="w-full rounded-full border border-[#dadce0] px-6 py-3 text-sm font-medium text-[#1a73e8] transition-colors hover:bg-[#f8f9fa]"
           >
             Ladda exempeldata
           </button>
@@ -183,33 +220,33 @@ export default function CarTracker() {
     )
   }
 
-  // ── Main view ──────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#f1f3f4]">
-      {/* Navbar */}
-      <header className="sticky top-0 z-10 bg-white border-b border-[#dadce0]">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#1a73e8] flex items-center justify-center shadow-sm">
+      <header className="sticky top-0 z-20 border-b border-[#dadce0] bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:py-0">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1a73e8] shadow-sm">
               <CarIcon className="h-5 w-5 text-white" />
             </div>
-            <span className="text-lg font-medium text-[#202124] tracking-tight">Besiktningsöversikt</span>
+            <span className="truncate text-base font-medium tracking-tight text-[#202124] sm:text-lg">
+              Besiktnings\u00F6versikt
+            </span>
           </div>
 
-          <label className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium text-[#1a73e8] hover:bg-[#e8f0fe] cursor-pointer transition-colors">
+          <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe] sm:w-auto sm:rounded-full">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            Ersätt fil
+            Ers\u00E4tt fil
             <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileInput} />
           </label>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-5">
+      <main className="mx-auto max-w-6xl space-y-4 px-4 py-6 sm:space-y-5 sm:px-6 sm:py-8">
         {error && (
-          <div className="flex items-center gap-3 bg-white border border-[#dadce0] rounded-2xl px-5 py-4 text-sm text-[#d93025]">
+          <div className="flex items-center gap-3 rounded-2xl border border-[#dadce0] bg-white px-4 py-4 text-sm text-[#d93025] sm:px-5">
             <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -225,34 +262,57 @@ export default function CarTracker() {
           filter={filter}
           companies={companies}
           companyFilter={companyFilter}
+          sort={sort}
+          sortDir={sortDir}
           onSearch={setSearch}
           onFilter={setFilter}
           onCompanyFilter={setCompanyFilter}
+          onSort={setSort}
+          onSortDir={setSortDir}
         />
 
-        {/* Table card */}
-        <div className="bg-white rounded-2xl border border-[#dadce0] overflow-hidden">
+        <div className="space-y-3 lg:hidden">
+          {filtered.length > 0 && filtered.map((car) => <MobileCarCard key={car.id} car={car} />)}
+
+          {filtered.length === 0 && (
+            <div className="rounded-2xl border border-[#dadce0] bg-white px-5 py-10 text-center text-sm text-[#9aa0a6]">
+              Inga fordon matchar filtren.
+            </div>
+          )}
+
+          {filtered.length > 0 && (
+            <div className="rounded-2xl border border-[#dadce0] bg-white px-4 py-3 text-center text-xs text-[#9aa0a6]">
+              {filtered.length} av {cars.length} fordon
+            </div>
+          )}
+        </div>
+
+        <div className="hidden overflow-hidden rounded-2xl border border-[#dadce0] bg-white lg:block">
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#f1f3f4]">
                 {SORT_COLS.map((col) => (
-                  <th
-                    key={col.value}
-                    onClick={() => handleSortClick(col.value)}
-                    className={`text-left py-3 px-4 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-colors hover:bg-[#f8f9fa] ${
-                      sort === col.value ? 'text-[#1a73e8]' : 'text-[#5f6368]'
-                    }`}
-                  >
-                    <span className="inline-flex items-center gap-1">
+                  <th key={col.value} className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-[#5f6368]">
+                    <button
+                      type="button"
+                      onClick={() => handleSortClick(col.value)}
+                      className={`inline-flex items-center gap-1 rounded-md transition-colors hover:text-[#1a73e8] ${
+                        sort === col.value ? 'text-[#1a73e8]' : 'text-[#5f6368]'
+                      }`}
+                    >
                       {col.label}
                       <svg
                         className={`h-3 w-3 transition-opacity ${sort === col.value ? 'opacity-100' : 'opacity-0'}`}
                         fill="none" viewBox="0 0 24 24" stroke="currentColor"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
-                          d={sortDir === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d={sortDir === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'}
+                        />
                       </svg>
-                    </span>
+                    </button>
                   </th>
                 ))}
               </tr>
@@ -260,7 +320,7 @@ export default function CarTracker() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-16 text-center text-sm text-[#9aa0a6]">
+                  <td colSpan={SORT_COLS.length} className="py-16 text-center text-sm text-[#9aa0a6]">
                     Inga fordon matchar filtren.
                   </td>
                 </tr>
@@ -271,7 +331,7 @@ export default function CarTracker() {
           </table>
 
           {filtered.length > 0 && (
-            <div className="px-4 py-3 border-t border-[#f1f3f4] text-xs text-[#9aa0a6]">
+            <div className="border-t border-[#f1f3f4] px-5 py-3 text-xs text-[#9aa0a6]">
               {filtered.length} av {cars.length} fordon
             </div>
           )}
