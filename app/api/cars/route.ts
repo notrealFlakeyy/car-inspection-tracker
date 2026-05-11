@@ -3,20 +3,50 @@ import path from 'path'
 import * as XLSX from 'xlsx'
 import { normalizeText } from '@/lib/textUtils'
 
+function datePartsToIso(year: number, month: number, day: number): string | null {
+  if (!Number.isFinite(day) || !Number.isFinite(month) || !Number.isFinite(year)) return null
+  return new Date(Date.UTC(year, month - 1, day)).toISOString()
+}
+
 function parseFinDate(val: unknown): string | null {
-  if (!val || typeof val !== 'string') return null
+  if (!val) return null
+
+  if (val instanceof Date) {
+    return datePartsToIso(val.getUTCFullYear(), val.getUTCMonth() + 1, val.getUTCDate())
+  }
+
+  if (typeof val === 'number') {
+    const parsed = XLSX.SSF.parse_date_code(val)
+    if (!parsed) return null
+    return datePartsToIso(parsed.y, parsed.m, parsed.d)
+  }
+
+  if (typeof val !== 'string') return null
+
   const parts = val.trim().split('.')
   if (parts.length !== 3) return null
   const day = parseInt(parts[0], 10)
   const month = parseInt(parts[1], 10)
   const year = parseInt(parts[2], 10)
-  if (isNaN(day) || isNaN(month) || isNaN(year)) return null
-  return new Date(Date.UTC(year, month - 1, day)).toISOString()
+  return datePartsToIso(year, month, day)
 }
 
 // "Oravais Servicetrafik Ab. Slagfältsvägen 51, 66800 ORAVAIS" → "Oravais Servicetrafik Ab"
 function extractCompany(ownerField: string): string {
   return ownerField.split('. ')[0].trim()
+}
+
+function getSourceFiles(): string[] {
+  const publicDir = path.join(process.cwd(), 'public')
+
+  return fs.readdirSync(publicDir)
+    .map((fileName) => {
+      const match = /^ajoneuvot \((\d+)\)\.(csv|xlsx)$/i.exec(fileName)
+      return match ? { fileName, index: Number(match[1]) } : null
+    })
+    .filter((file): file is { fileName: string; index: number } => file !== null)
+    .sort((a, b) => a.index - b.index)
+    .map(({ fileName }) => fileName)
 }
 
 interface RegEntry {
@@ -28,18 +58,11 @@ interface RegEntry {
   allInactive: boolean
 }
 
-const CSV_FILES = [
-  'ajoneuvot (2).csv',
-  'ajoneuvot (3).csv',
-  'ajoneuvot (4).csv',
-  'ajoneuvot (5).csv',
-]
-
 export async function GET() {
   try {
     const regMap = new Map<string, RegEntry>()
 
-    for (const fileName of CSV_FILES) {
+    for (const fileName of getSourceFiles()) {
       const filePath = path.join(process.cwd(), 'public', fileName)
       if (!fs.existsSync(filePath)) continue
 
@@ -70,8 +93,8 @@ export async function GET() {
         const existing = regMap.get(reg)
         if (existing) {
           if (company) existing.companies.add(company)
-          if (!existing.lastInspected && last) existing.lastInspected = last
-          if (!existing.nextInspection && next) existing.nextInspection = next
+          if (last) existing.lastInspected = last
+          if (next) existing.nextInspection = next
           if (!isInactive) existing.allInactive = false
         } else {
           regMap.set(reg, {
