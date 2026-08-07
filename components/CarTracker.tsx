@@ -58,6 +58,34 @@ const CarIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
+function mergeCars(existingCars: Car[], importedCars: Car[]): Car[] {
+  const regMap = new Map<string, Car>()
+
+  existingCars.forEach((car, index) => {
+    regMap.set(car.reg, { ...car, id: index + 1 })
+  })
+
+  importedCars.forEach((car) => {
+    const existing = regMap.get(car.reg)
+    if (existing) {
+      const companies = Array.from(new Set([...existing.companies, ...car.companies])).sort()
+      regMap.set(car.reg, {
+        ...existing,
+        name: car.name || existing.name,
+        lastInspected: car.lastInspected ?? existing.lastInspected,
+        nextInspection: car.nextInspection ?? existing.nextInspection,
+        inactive: existing.inactive && car.inactive,
+        companies,
+        sharedOwnership: companies.length > 1,
+      })
+    } else {
+      regMap.set(car.reg, { ...car })
+    }
+  })
+
+  return Array.from(regMap.values()).map((car, index) => ({ ...car, id: index + 1 }))
+}
+
 export default function CarTracker() {
   const [cars, setCars] = useState<Car[]>([])
   const [loading, setLoading] = useState(true)
@@ -129,7 +157,7 @@ export default function CarTracker() {
     try {
       const parsed = await parseExcel(file)
       resetViewState()
-      setCars(parsed)
+      setCars((currentCars) => mergeCars(currentCars, parsed))
     } catch {
       setError('Kunde inte läsa filen. Kontrollera formatet och försök igen.')
     }
@@ -238,7 +266,7 @@ export default function CarTracker() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
-            Ersätt fil
+            Lägg till fil
             <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileInput} />
           </label>
         </div>
